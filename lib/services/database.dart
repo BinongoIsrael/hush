@@ -16,7 +16,7 @@ class DatabaseService {
 
   Future<Database> _initDatabase() async {
     final databasePath = await getDatabasesPath();
-    final path = '$databasePath/loqosaurus_app.db';
+    final path = '$databasePath/hush_app.db';
     final database = await openDatabase(
       path,
       version: 1,
