@@ -21,12 +21,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Loqosaurus',
+      title: 'Hush',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'For the smart people.'),
+      home: const MyHomePage(title: 'A safe space for everyone to socialize and share their experiences in life anonymously.'),
       debugShowCheckedModeBanner: false,
     );
   }

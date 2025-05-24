@@ -202,7 +202,7 @@ class AuthenticationScreenState extends State<AuthenticationScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Image.asset(
-                'assets/images/hush.png',
+                'assets/images/logo.png',
                 height: 80.0,
               ),
               const SizedBox(height: 8.0),
@@ -211,7 +211,7 @@ class AuthenticationScreenState extends State<AuthenticationScreen> {
                 style: TextStyle(
                   fontSize: _extraLarge,
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'PlawritePL',
+                  fontFamily: 'PlaywritePL',
                   color: _themeMain,
                 ),
               ),
