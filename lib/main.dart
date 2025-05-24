@@ -46,8 +46,8 @@ class _MyHomePageState extends State<MyHomePage> {
   final uuid = const Uuid();
 
   static const Color _themeBG = Color(0xfff5f5f5);
-  static const Color _themeMain = Color(0xff7fb902);
-  static const Color _themeLite = Color(0xffdbebb7);
+  static const Color _themeMain = Color(0xFF0097A7);
+  static const Color _themeLite = Color(0xFFB2EBF2);
   static const Color _themeGrey = Color(0xff505050);
 
   late bool _keepScreenOn = false;
