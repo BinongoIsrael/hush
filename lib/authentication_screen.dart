@@ -22,8 +22,8 @@ class AuthenticationScreenState extends State<AuthenticationScreen> {
   final uuid = const Uuid();
   final globalDelay = 500;
   final _themeBG = const Color(0xfff5f5f5);
-  final _themeMain = const Color(0xff7fb902);
-  final _themeLite = const Color(0xffdbebb7);
+  final _themeMain = const Color(0xFF0097A7);
+  final _themeLite = const Color(0xFFB2EBF2);
   final _bhServer = 'https://bleedingheart-api.vercel.app';
 
   late final double _extraLarge = 36.0;
