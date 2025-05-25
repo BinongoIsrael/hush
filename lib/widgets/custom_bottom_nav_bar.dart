@@ -54,37 +54,38 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-      Container(
-      width: _itemWidth,
-      decoration: BoxDecoration(
-        borderRadius: _itemBorderRadius,
-      ),
-      child: Material(
-        color: isSelected ? themeLite : Colors.transparent,
-        borderRadius: _itemBorderRadius,
-        child: InkWell(
-          borderRadius: _itemBorderRadius,
-          onTap: onItemSelected != null ? () => onItemSelected(index) : null,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(_iconPadding, _itemPadding, _iconPadding, _itemPadding),
-            child: Icon(
-              icon,
-              color: isSelected ? themeDark : Colors.black45,
-              size: _iconSize,
+        Container(
+          width: _itemWidth,
+          decoration: BoxDecoration(
+            borderRadius: _itemBorderRadius,
+          ),
+          child: Material(
+            color: isSelected ? themeLite : Colors.transparent,
+            borderRadius: _itemBorderRadius,
+            child: InkWell(
+              borderRadius: _itemBorderRadius,
+              onTap: onItemSelected != null ? () => onItemSelected(index) : null,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(_iconPadding, _itemPadding, _iconPadding, _itemPadding),
+                child: Icon(
+                  icon,
+                  color: isSelected ? themeDark : Colors.black45,
+                  size: _iconSize,
+                ),
+              ),
             ),
           ),
         ),
-      ),
-    ),
-    const SizedBox(height: _labelSpacing),
-    Text(
-    label,
-    textAlign: TextAlign.center,
-    style: TextStyle(
-    fontSize: _labelFontSize,
-    fontWeight: FontWeight.bold,color: isSelected ? themeDark : themeGrey,
-    ),
-    ),
+        const SizedBox(height: _labelSpacing),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: _labelFontSize,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? themeDark : themeGrey,
+          ),
+        ),
       ],
     );
   }
@@ -98,66 +99,58 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     final isFullyLoaded = widget.isFullyLoaded;
 
     return Container(
-        height: _navBarHeight,
-        width: double.infinity,
-        padding: _navBarPadding,
-        color: Colors.white,
-        child: Center(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+      height: _navBarHeight,
+      width: double.infinity,
+      padding: _navBarPadding,
+      color: Colors.white,
+      child: Center(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
               _buildNavItem(
                 index: 0,
-                icon: Icons.location_searching_outlined,
+                icon: Icons.home,
                 label: "Home",
                 isSelected: navItem == 0,
               ),
-              if (!isAdminMode) const SizedBox(width: _spacingWidth),
-              if (!isAdminMode)
+              if (isSignedIn) const SizedBox(width: _spacingWidth),
+              if (isSignedIn)
                 _buildNavItem(
                   index: 1,
-                  icon: Icons.menu_book,
-                  label: "Study",
+                  icon: Icons.add_circle_outline,
+                  label: "Hush",
                   isSelected: navItem == 1,
                 ),
-              if (isSignedIn && !isAdminMode) const SizedBox(width: _spacingWidth),
-              if (isSignedIn && !isAdminMode)
+              if (isSignedIn) const SizedBox(width: _spacingWidth),
+              if (isSignedIn)
                 _buildNavItem(
                   index: 2,
-                  icon: Icons.emoji_events,
-                  label: "Leaderboard",
+                  icon: Icons.person,
+                  label: "My Activity",
                   isSelected: navItem == 2,
                 ),
               if (!hideAdminFeatures) const SizedBox(width: _spacingWidth),
               if (!hideAdminFeatures)
                 _buildNavItem(
                   index: 3,
-                  icon: Icons.map,
-                  label: "Organize",
+                  icon: Icons.gavel,
+                  label: "Moderate",
                   isSelected: navItem == 3,
-              ),
+                ),
               if (!hideAdminFeatures) const SizedBox(width: _spacingWidth),
               if (!hideAdminFeatures)
                 _buildNavItem(
-                  index: 5,
-                  icon: Icons.star,
-                  label: "Bookmarks",
-                  isSelected: navItem == 5,
-                ),
-              if (isFullyLoaded && isSignedIn) const SizedBox(width: _spacingWidth),
-              if (isFullyLoaded && isSignedIn)
-                _buildNavItem(
                   index: 4,
-                  icon: Icons.add_circle_outline,
-                  label: "Contribute",
+                  icon: Icons.group,
+                  label: "Users",
                   isSelected: navItem == 4,
                 ),
-              ],
-            ),
+            ],
           ),
         ),
+      ),
     );
   }
 }

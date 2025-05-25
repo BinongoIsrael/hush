@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
-
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'widgets/loading_screen.dart';
@@ -9,9 +8,11 @@ import 'widgets/personal_island.dart';
 import 'widgets/app_settings_dialog.dart';
 import 'widgets/custom_bottom_nav_bar.dart';
 import 'authentication_screen.dart';
-
-import '../services/database.dart';
-import '../models/account.dart';
+import 'screens/create_post_screen.dart';
+import 'screens/feed_screen.dart';
+import 'screens/activity_screen.dart';
+import 'services/database.dart';
+import 'models/account.dart';
 
 void main() => runApp(const MyApp());
 
@@ -42,9 +43,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // variables
   final uuid = const Uuid();
-
   static const Color _themeBG = Color(0xfff5f5f5);
   static const Color _themeMain = Color(0xFF0097A7);
   static const Color _themeLite = Color(0xFFB2EBF2);
@@ -65,7 +64,11 @@ class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
   late Widget _signingScreen;
   late Widget _loadingScreen = SizedBox();
-  late Widget _dashboardScreen = Container();
+  late Widget _homeScreen = Container();
+  late Widget _createPostScreen = Container();
+  late Widget _activityScreen = Container();
+  late Widget _moderateScreen = Container();
+  late Widget _usersScreen = Container();
   late Widget _currentScreen;
 
   late Account _signedAccount;
@@ -81,61 +84,70 @@ class _MyHomePageState extends State<MyHomePage> {
     _initializeRequirements();
   }
 
-  // UI methods
-
   void _handleNavItemSelected(int index) {
     setState(() {
       _selectedIndex = index;
     });
-    _buildHomePage();
+    _buildScreens();
   }
 
   void _handleAppSettingsTap() {
     showDialog(
-        context: context,
-        builder: (BuildContext context) {
-      return AppSettingsDialog(
-        netImgLg: _netImgLg,
-        apiName: _fullName,
-        apiEmail: _apiEmail,
-        headLine2: _headLine2,
-        body: _body,
-        themeBG: _themeBG,
-        themeGrey: _themeGrey,
-        themeMain: _themeMain,
-        themeLite: _themeLite,
-        keepScreenOn: _keepScreenOn,
-        useLargeTexts: _useLargeTexts,
-        onKeepScreenOnChanged: (newValue) {
-          setState(() {
-            _keepScreenOn = newValue;
-          });
-          WakelockPlus.toggle(enable: _keepScreenOn);
-          Navigator.of(context).pop();
-          _handleAppSettingsTap();
-          _buildHomePage();
-        },
-        onUseLargeTextsChanged: (newValue) {
-          setState(() {
-            _useLargeTexts = newValue;
-          });
-          _rescaleFontSizes();
-          Navigator.of(context).pop();
-          _handleAppSettingsTap();
-          _buildHomePage();
-        },
-        onSignOutTap: () {
-          Navigator.of(context).pop();
-          DatabaseService().clearAccounts().then((_) {
+      context: context,
+      builder: (BuildContext context) {
+        return AppSettingsDialog(
+          netImgLg: _netImgLg,
+          apiName: _fullName,
+          apiEmail: _apiEmail,
+          headLine2: _headLine2,
+          body: _body,
+          themeBG: _themeBG,
+          themeGrey: _themeGrey,
+          themeMain: _themeMain,
+          themeLite: _themeLite,
+          keepScreenOn: _keepScreenOn,
+          useLargeTexts: _useLargeTexts,
+          onKeepScreenOnChanged: (newValue) {
             setState(() {
-              _isSignedIn = false;
-              _selectedIndex = 0;
+              _keepScreenOn = newValue;
             });
-            _buildHomePage();
-          });
-        },
-      );
-    }, );
+            WakelockPlus.toggle(enable: _keepScreenOn);
+            Navigator.of(context).pop();
+            _handleAppSettingsTap();
+            _buildScreens();
+          },
+          onUseLargeTextsChanged: (newValue) {
+            setState(() {
+              _useLargeTexts = newValue;
+            });
+            _rescaleFontSizes();
+            Navigator.of(context).pop();
+            _handleAppSettingsTap();
+            _buildScreens();
+          },
+          onSignOutTap: () {
+            Navigator.of(context).pop();
+            DatabaseService().signOutAccount(_signedAccount.uuid).then((_) {
+              setState(() {
+                _isSignedIn = false;
+                _selectedIndex = 0;
+                _fullName = '';
+                _apiEmail = '';
+                _apiPhotoUrl = '';
+                _isAdmin = false;
+                _netImgSm = const SizedBox(width: 15.0);
+                _netImgLg = const SizedBox(width: 30.0);
+              });
+              _buildScreens();
+            }).catchError((e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error signing out: $e')),
+              );
+            });
+          },
+        );
+      },
+    );
   }
 
   Future<void> _rescaleFontSizes() async {
@@ -170,7 +182,6 @@ class _MyHomePageState extends State<MyHomePage> {
       try {
         final netImgSm = _buildProfileImage(radius: 15);
         final netImgLg = _buildProfileImage(radius: 30);
-
         setState(() {
           _netImgSm = netImgSm;
           _netImgLg = netImgLg;
@@ -191,36 +202,33 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _showAppOfflineDialog() async {
     await showDialog(
-        context: context,
-        builder: (BuildContext context) => AlertDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
         title: Text(
           "Device is Offline",
-          style: TextStyle(
-            fontSize: _headLine2,
-          ),
+          style: TextStyle(fontSize: _headLine2),
         ),
         content: Text(
           "Please check your internet connection.",
-          style: TextStyle(
-            fontSize: _body,
-          ),
+          style: TextStyle(fontSize: _body),
         ),
         actions: [
-        TextButton(
-        onPressed: () async {
-      setState(() => _isConnectionLost = true);Navigator.of(context).pop();
-      _checkInternetConnection();
-        },
-          child: Text(
-            "Retry",
-            style: TextStyle(
-              fontSize: _body,
-              fontWeight: FontWeight.bold,
+          TextButton(
+            onPressed: () async {
+              setState(() => _isConnectionLost = true);
+              Navigator.of(context).pop();
+              _checkInternetConnection();
+            },
+            child: Text(
+              "Retry",
+              style: TextStyle(
+                fontSize: _body,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-        ),
         ],
-        ),
+      ),
     );
   }
 
@@ -236,12 +244,28 @@ class _MyHomePageState extends State<MyHomePage> {
     _updateCurrentScreen();
   }
 
-  Future<void> _buildHomePage() async {
+  Future<void> _buildScreens() async {
     WakelockPlus.toggle(enable: _keepScreenOn);
 
-    _dashboardScreen = Scaffold(
-        body: Stack(
-          children: [
+    _homeScreen = Scaffold(
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              const SizedBox(height: 100.0),
+              Expanded(
+                child: FeedScreen(
+                  isSignedIn: _isSignedIn,
+                  userId: _signedAccount.uuid,
+                  isAdmin: _isAdmin,
+                  themeMain: _themeMain,
+                  themeGrey: _themeGrey,
+                  bodyFontSize: _body,
+                ),
+              ),
+            ],
+          ),
+          if (_isSignedIn)
             PersonalIsland(
               netImgSm: _netImgSm,
               apiName: _fullName,
@@ -250,61 +274,134 @@ class _MyHomePageState extends State<MyHomePage> {
               isSignedIn: _isSignedIn,
               onAppSettingsTap: _handleAppSettingsTap,
             ),
-            Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Hush',
-                      style: TextStyle(
-                        fontSize: _extraLarge,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'PlaywritePL',
-                        color: _themeMain,
-                      ),
-                  ),
-                  const SizedBox(width: 12.0),
-                  Text(
-                    'v1.0',
-                    style: TextStyle(
-                      fontSize: _body,
-                      color: _themeGrey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        bottomNavigationBar: CustomBottomNavBar(
-          themeLite: _themeLite,
-          themeDark: _themeMain,
-          themeGrey: _themeGrey,
-          navItem: _selectedIndex,
-          isAdminMode: _isAdmin,
-          isSignedIn: _isSignedIn,
-          hideAdminFeatures: !_isAdmin,
-          isFullyLoaded: !_isLoading,
-          onItemSelected: _handleNavItemSelected,
-        ),
+        ],
+      ),
+      bottomNavigationBar: CustomBottomNavBar(
+        themeLite: _themeLite,
+        themeDark: _themeMain,
+        themeGrey: _themeGrey,
+        navItem: _selectedIndex,
+        isAdminMode: _isAdmin,
+        isSignedIn: _isSignedIn,
+        hideAdminFeatures: !_isAdmin,
+        isFullyLoaded: !_isLoading,
+        onItemSelected: _handleNavItemSelected,
+      ),
     );
+
+    _createPostScreen = CreatePostScreen(
+      userId: _signedAccount.uuid,
+      themeMain: _themeMain,
+      themeLite: _themeLite,
+      bodyFontSize: _body,
+      onPostCreated: () {
+        setState(() {
+          _selectedIndex = 0;
+        });
+        _buildScreens();
+      },
+      navItem: _selectedIndex,
+      onItemSelected: _handleNavItemSelected,
+      isAdmin: _isAdmin,
+      isSignedIn: _isSignedIn,
+      themeGrey: _themeGrey,
+      isFullyLoaded: !_isLoading,
+    );
+
+    _activityScreen = ActivityScreen(
+      userId: _signedAccount.uuid,
+      themeMain: _themeMain,
+      themeGrey: _themeGrey,
+      bodyFontSize: _body,
+      navItem: _selectedIndex,
+      onItemSelected: _handleNavItemSelected,
+      isAdmin: _isAdmin,
+      isSignedIn: _isSignedIn,
+      themeLite: _themeLite,
+      isFullyLoaded: !_isLoading,
+      netImgSm: _netImgSm, // Added
+      apiName: _fullName, // Added
+      headLine3: _headLine3, // Added
+      onAppSettingsTap: _handleAppSettingsTap, // Added
+    );
+
+    _moderateScreen = Scaffold(
+      body: Center(
+        child: Text(
+          'Moderate Content (Admin)',
+          style: TextStyle(fontSize: _headLine2, color: _themeMain),
+        ),
+      ),
+      bottomNavigationBar: CustomBottomNavBar(
+        themeLite: _themeLite,
+        themeDark: _themeMain,
+        themeGrey: _themeGrey,
+        navItem: _selectedIndex,
+        isAdminMode: _isAdmin,
+        isSignedIn: _isSignedIn,
+        hideAdminFeatures: !_isAdmin,
+        isFullyLoaded: !_isLoading,
+        onItemSelected: _handleNavItemSelected,
+      ),
+    );
+
+    _usersScreen = Scaffold(
+      body: Center(
+        child: Text(
+          'Manage Users (Admin)',
+          style: TextStyle(fontSize: _headLine2, color: _themeMain),
+        ),
+      ),
+      bottomNavigationBar: CustomBottomNavBar(
+        themeLite: _themeLite,
+        themeDark: _themeMain,
+        themeGrey: _themeGrey,
+        navItem: _selectedIndex,
+        isAdminMode: _isAdmin,
+        isSignedIn: _isSignedIn,
+        hideAdminFeatures: !_isAdmin,
+        isFullyLoaded: !_isLoading,
+        onItemSelected: _handleNavItemSelected,
+      ),
+    );
+
     _updateCurrentScreen();
   }
 
   void _updateCurrentScreen() {
-    setState(() => _currentScreen = _isSignedIn ? _dashboardScreen : _signingScreen);
+    setState(() {
+      if (!_isSignedIn) {
+        _currentScreen = _signingScreen;
+      } else {
+        switch (_selectedIndex) {
+          case 0:
+            _currentScreen = _homeScreen;
+            break;
+          case 1:
+            _currentScreen = _createPostScreen;
+            break;
+          case 2:
+            _currentScreen = _activityScreen;
+            break;
+          case 3:
+            _currentScreen = _moderateScreen;
+            break;
+          case 4:
+            _currentScreen = _usersScreen;
+            break;
+          default:
+            _currentScreen = _homeScreen;
+        }
+      }
+    });
   }
 
-  // helpers and utilities
   Future<void> _checkInternetConnection() async {
     setState(() => _isLoading = true);
-
     bool connected = false;
     try {
-      final result = await InternetAddress.lookup('google.com')
-          .timeout(const Duration(seconds: 15));
+      final result = await InternetAddress.lookup('google.com').timeout(const Duration(seconds: 15));
       connected = result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-
       if (_isConnectionLost) {
         setState(() => _isConnectionLost = false);
         _initializeRequirements();
@@ -312,7 +409,6 @@ class _MyHomePageState extends State<MyHomePage> {
     } catch (_) {
       _showAppOfflineDialog();
     }
-
     setState(() {
       _isOfflineMode = !connected;
       _isLoading = false;
@@ -321,26 +417,22 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _checkSignedAccount() async {
     final accounts = await DatabaseService().getSignedAccount();
-
     if (accounts.isEmpty) {
       setState(() => _isSignedIn = false);
-      _buildHomePage();
+      _buildScreens();
       return;
     }
-
     setState(() {
       _signedAccount = accounts.first;
-      _fullName = _signedAccount.apiName!;
-      _apiEmail = _signedAccount.apiEmail!;
-      _apiPhotoUrl = _signedAccount.apiPhotoUrl!;
-      _isAdmin = (_signedAccount.userLevel! >= 2);
+      _fullName = _signedAccount.apiName ?? '';
+      _apiEmail = _signedAccount.apiEmail ?? '';
+      _apiPhotoUrl = _signedAccount.apiPhotoUrl ?? '';
+      _isAdmin = (_signedAccount.userLevel ?? 0) >= 2;
       _isSignedIn = true;
     });
-
-    _buildHomePage();
+    _buildScreens();
   }
 
-  // system methods
   Future<void> _initializeRequirements() async {
     await _checkInternetConnection();
     await _buildAuthenticationScreen();
