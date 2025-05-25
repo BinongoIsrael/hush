@@ -54,6 +54,7 @@ class Comment {
   final String userId;
   final String content;
   final bool isAnonymous;
+  final String? parentCommentId; // Added for threaded replies
   final String createdAt;
 
   Comment({
@@ -62,6 +63,7 @@ class Comment {
     required this.userId,
     required this.content,
     required this.isAnonymous,
+    this.parentCommentId, // Nullable for top-level comments
     required this.createdAt,
   });
 
@@ -72,22 +74,20 @@ class Comment {
       'user_id': userId,
       'content': content,
       'is_anonymous': isAnonymous ? 1 : 0,
+      'parent_comment_id': parentCommentId, // Added
       'created_at': createdAt,
     };
   }
 
   factory Comment.fromMap(Map<String, dynamic> map) {
     return Comment(
-      id: map['id'] ?? '',
-      postId: map['post_id'] ?? '',
-      userId: map['user_id'] ?? '',
-      content: map['content'] ?? '',
-      isAnonymous: (map['is_anonymous'] ?? 0) == 1,
-      createdAt: map['created_at'] ?? '',
+      id: map['id'],
+      postId: map['post_id'],
+      userId: map['user_id'],
+      content: map['content'],
+      isAnonymous: map['is_anonymous'] == 1,
+      parentCommentId: map['parent_comment_id'], // Added
+      createdAt: map['created_at'],
     );
   }
-
-  String toJson() => json.encode(toMap());
-
-  factory Comment.fromJson(String source) => Comment.fromMap(json.decode(source));
 }

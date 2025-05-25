@@ -19,7 +19,7 @@ class DatabaseService {
     final path = '$databasePath/hush_app.db';
     final database = await openDatabase(
       path,
-      version: 2, // Incremented version to trigger _onUpgrade
+      version: 3, // Incremented version to trigger _onUpgrade
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: (db) async => await db.execute('PRAGMA foreign_keys = ON'),
@@ -70,9 +70,11 @@ class DatabaseService {
         user_id TEXT,
         content TEXT,
         is_anonymous INTEGER DEFAULT 0,
+        parent_comment_id TEXT, 
         created_at TEXT NOT NULL,
         FOREIGN KEY (post_id) REFERENCES post(id),
-        FOREIGN KEY (user_id) REFERENCES account(uuid)
+        FOREIGN KEY (user_id) REFERENCES account(uuid),
+        FOREIGN KEY (parent_comment_id) REFERENCES comment(id)
       );
       """
     );
@@ -103,9 +105,10 @@ class DatabaseService {
     );
   }
 
+// Update _onUpgrade to handle schema migration
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      // Create new tables if upgrading from version 1
+      // Previous table creations for version 1 to 2
       await db.execute(
           """
         CREATE TABLE post (
@@ -128,9 +131,11 @@ class DatabaseService {
           user_id TEXT,
           content TEXT,
           is_anonymous INTEGER DEFAULT 0,
+          parent_comment_id TEXT, -- Added for threaded replies
           created_at TEXT NOT NULL,
           FOREIGN KEY (post_id) REFERENCES post(id),
-          FOREIGN KEY (user_id) REFERENCES account(uuid)
+          FOREIGN KEY (user_id) REFERENCES account(uuid),
+          FOREIGN KEY (parent_comment_id) REFERENCES comment(id)
         );
         """
       );
@@ -159,6 +164,13 @@ class DatabaseService {
         );
         """
       );
+    }
+    if (oldVersion < 3) {
+      // Add parent_comment_id column for existing databases
+      await db.execute("ALTER TABLE comment ADD COLUMN parent_comment_id TEXT");
+      await db.execute("UPDATE comment SET parent_comment_id = NULL");
+      await db.execute(
+          "ALTER TABLE comment ADD FOREIGN KEY (parent_comment_id) REFERENCES comment(id)");
     }
   }
 

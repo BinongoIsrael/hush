@@ -4,6 +4,7 @@ import '../models/post.dart';
 import '../models/account.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/personal_island.dart';
+import 'post_detail_screen.dart';
 
 class ActivityScreen extends StatelessWidget {
   final String userId;
@@ -70,66 +71,64 @@ class ActivityScreen extends StatelessWidget {
                           ),
                         ),
                         ...posts.asMap().entries.map((entry) {
-                          final index = entry.key;
                           final post = entry.value;
-                          return Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    post.isAnonymous ? 'Posted Anonymously' : 'Posted by You',
-                                    style: TextStyle(
-                                      fontSize: bodyFontSize,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PostDetailScreen(
+                                    post: post,
+                                    isSignedIn: isSignedIn,
+                                    userId: userId,
+                                    isAdmin: isAdmin,
+                                    themeMain: themeMain,
+                                    themeGrey: themeGrey,
+                                    bodyFontSize: bodyFontSize,
                                   ),
-                                  const SizedBox(height: 8.0),
-                                  Text(
-                                    post.content,
-                                    style: TextStyle(fontSize: bodyFontSize),
-                                  ),
-                                  if (post.tags.isNotEmpty)
-                                    Wrap(
-                                      spacing: 8.0,
-                                      children: post.tags
-                                          .map((tag) => Chip(
-                                        label: Text(
-                                          tag,
-                                          style: TextStyle(fontSize: bodyFontSize - 2),
-                                        ),
-                                      ))
-                                          .toList(),
+                                ),
+                              );
+                            },
+                            child: Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      post.isAnonymous ? 'Posted Anonymously' : 'Posted by You',
+                                      style: TextStyle(
+                                        fontSize: bodyFontSize,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  const SizedBox(height: 8.0),
-                                  Text(
-                                    'Reactions: ${post.reactionCount}',
-                                    style: TextStyle(
-                                      fontSize: bodyFontSize - 2,
-                                      color: themeGrey,
+                                    const SizedBox(height: 8.0),
+                                    Text(
+                                      post.content,
+                                      style: TextStyle(fontSize: bodyFontSize),
                                     ),
-                                  ),
-                                  FutureBuilder<List<Comment>>(
-                                    future: DatabaseService().getComments(post.id),
-                                    builder: (context, snapshot) {
-                                      if (!snapshot.hasData) return const SizedBox.shrink();
-                                      final comments = snapshot.data!.where((comment) => comment.userId == userId).toList();
-                                      return Column(
-                                        children: comments.map((comment) => ListTile(
-                                          title: Text(
-                                            comment.isAnonymous ? 'Commented Anonymously' : 'Commented by You',
+                                    if (post.tags.isNotEmpty)
+                                      Wrap(
+                                        spacing: 8.0,
+                                        children: post.tags
+                                            .map((tag) => Chip(
+                                          label: Text(
+                                            tag,
                                             style: TextStyle(fontSize: bodyFontSize - 2),
                                           ),
-                                          subtitle: Text(
-                                            comment.content,
-                                            style: TextStyle(fontSize: bodyFontSize - 2),
-                                          ),
-                                        )).toList(),
-                                      );
-                                    },
-                                  ),
-                                ],
+                                        ))
+                                            .toList(),
+                                      ),
+                                    const SizedBox(height: 8.0),
+                                    Text(
+                                      'Reactions: ${post.reactionCount}',
+                                      style: TextStyle(
+                                        fontSize: bodyFontSize - 2,
+                                        color: themeGrey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           );
