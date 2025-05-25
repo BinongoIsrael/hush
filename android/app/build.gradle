@@ -31,9 +31,9 @@ android {
     signingConfigs {
         release {
             keyAlias 'release'
-            keyPassword 'hush.app'
-            storeFile file('release-key.jks')
-            storePassword 'hush.app'
+            keyPassword 'projectamygdala'
+            storeFile file('upload-keystore.jks')
+            storePassword 'projectamygdala'
         }
     }
     buildTypes {
