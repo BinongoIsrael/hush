@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../models/account.dart';
+
 
 class CustomBottomNavBar extends StatefulWidget {
   final Color themeLite;
@@ -10,6 +12,9 @@ class CustomBottomNavBar extends StatefulWidget {
   final bool hideAdminFeatures;
   final bool isFullyLoaded;
   final ValueChanged<int>? onItemSelected;
+  final Account user;
+
+
 
   const CustomBottomNavBar({
     super.key,
@@ -21,7 +26,9 @@ class CustomBottomNavBar extends StatefulWidget {
     required this.isSignedIn,
     required this.hideAdminFeatures,
     required this.isFullyLoaded,
+    required this.user, // NEW
     this.onItemSelected,
+
   });
 
   @override
@@ -30,13 +37,15 @@ class CustomBottomNavBar extends StatefulWidget {
 
 class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
   static const double _iconSize = 24;
+  static const double _iconSizeLarge = 43; // Hush icon size
+  static const double _itemWidthLarge = 90; // Hush width
   static const double _labelFontSize = 14;
   static const double _itemWidth = 80;
   static const double _spacingWidth = 14;
   static const double _itemPadding = 8;
   static const double _iconPadding = 12;
   static const double _labelSpacing = 3;
-  static const double _navBarHeight = 100;
+  static const double _navBarHeight = 71;
   static const EdgeInsets _navBarPadding = EdgeInsets.fromLTRB(12, 2, 12, 10);
   static final BorderRadius _itemBorderRadius = BorderRadius.circular(24);
 
@@ -45,18 +54,31 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     required IconData icon,
     required String label,
     required bool isSelected,
+    bool isHush = false,
+    bool emphasize = false,
   }) {
     final themeLite = widget.themeLite;
     final themeDark = widget.themeDark;
     final themeGrey = widget.themeGrey;
     final onItemSelected = widget.onItemSelected;
 
+    //final double iconSize = emphasize ? 36 : _iconSize;
+    final double containerSize = emphasize ? 60 : _itemWidth;
+
+    final bool isHush = label.toLowerCase() == 'hush' && widget.user.userLevel == 1;
+    final double iconSize = isHush ? _iconSizeLarge : _iconSize;
+    final double itemWidth = isHush ? _itemWidthLarge : _itemWidth;
+    final Color bgColor = isHush ? widget.themeLite.withOpacity(0.2) : Colors.transparent;
+    //final Color iconColor = isHush ? Colors.redAccent : (isSelected ? widget.themeDark : Colors.black45);
+    final Color iconColor = isSelected ? widget.themeDark : Colors.black45;
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          width: _itemWidth,
+          width: itemWidth,
           decoration: BoxDecoration(
+            color: emphasize ? themeLite.withOpacity(0.2) : Colors.transparent,
             borderRadius: _itemBorderRadius,
           ),
           child: Material(
@@ -69,23 +91,23 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
                 padding: const EdgeInsets.fromLTRB(_iconPadding, _itemPadding, _iconPadding, _itemPadding),
                 child: Icon(
                   icon,
-                  color: isSelected ? themeDark : Colors.black45,
-                  size: _iconSize,
+                  size: iconSize,
+                  color: iconColor,
                 ),
               ),
             ),
           ),
         ),
-        const SizedBox(height: _labelSpacing),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: _labelFontSize,
-            fontWeight: FontWeight.bold,
-            color: isSelected ? themeDark : themeGrey,
-          ),
-        ),
+//        const SizedBox(height: _labelSpacing),
+//        Text(
+//          label,
+//         textAlign: TextAlign.center,
+//          style: TextStyle(
+//            fontSize: _labelFontSize,
+//            fontWeight: FontWeight.bold,
+//            color: bgColor,
+//          ),
+//        ),
       ],
     );
   }
@@ -102,7 +124,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
       height: _navBarHeight,
       width: double.infinity,
       padding: _navBarPadding,
-      color: Colors.white,
+      color: widget.themeLite.withOpacity(1.0), // semi-transparent to let blur show
       child: Center(
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -122,6 +144,8 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
                   icon: Icons.add_circle_outline,
                   label: "Hush",
                   isSelected: navItem == 1,
+                  isHush: true,
+                  emphasize: widget.user.userLevel == 1, // Highlight if standard user
                 ),
               if (isSignedIn) const SizedBox(width: _spacingWidth),
               if (isSignedIn)
