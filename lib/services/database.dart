@@ -14,6 +14,20 @@ class DatabaseService {
     return _database!;
   }
 
+  Future<void> deleteReaction(String postId, String userId) async {
+    final db = await database;
+    await db.delete(
+      'reaction',
+      where: 'post_id = ? AND user_id = ?',
+      whereArgs: [postId, userId],
+    );
+    await db.rawUpdate(
+      'UPDATE post SET reaction_count = reaction_count - 1 WHERE id = ? AND reaction_count > 0',
+      [postId],
+    );
+  }
+
+
   Future<Database> _initDatabase() async {
     final databasePath = await getDatabasesPath();
     final path = '$databasePath/hush_app.db';
@@ -284,4 +298,20 @@ class DatabaseService {
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
+
+  Future<int> getReactionCount(String postId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> result = await db.query(
+      'post',
+      columns: ['reaction_count'],
+      where: 'id = ?',
+      whereArgs: [postId],
+    );
+    if (result.isNotEmpty) {
+      return result.first['reaction_count'] as int? ?? 0;
+    }
+    return 0;
+  }
+
 }
+
