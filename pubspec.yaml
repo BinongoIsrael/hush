@@ -40,6 +40,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/logo.png
+    - assets/images/bg_pattern.jpg
+    - assets/images/hush_logo.png
   fonts:
     - family: PlaywritePL
       fonts:
