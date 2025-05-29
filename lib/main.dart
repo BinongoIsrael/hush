@@ -13,8 +13,20 @@ import 'screens/feed_screen.dart';
 import 'screens/activity_screen.dart';
 import 'services/database.dart';
 import 'models/account.dart';
+import 'package:flutter/services.dart'; //added
 
-void main() => runApp(const MyApp());
+void main() {
+  // Set status bar to use dark icons on light background (or vice versa)
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+    statusBarColor: Color(0xFFF5F5F5), // light grey background
+    statusBarIconBrightness: Brightness.dark, // dark icons
+    statusBarBrightness: Brightness.light, // for iOS
+  ));
+
+
+  runApp(const MyApp());
+}
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -32,6 +44,31 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+class BackgroundWrapper extends StatelessWidget {
+  final Widget body;
+  final Widget? bottomNavigationBar;
+
+  const BackgroundWrapper({required this.body, this.bottomNavigationBar, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage("assets/images/bg_pattern.jpg"),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: body,
+        bottomNavigationBar: bottomNavigationBar,
+      ),
+    );
+  }
+}
+
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -247,45 +284,55 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _buildScreens() async {
     WakelockPlus.toggle(enable: _keepScreenOn);
 
-    _homeScreen = Scaffold(
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              const SizedBox(height: 100.0),
-              Expanded(
-                child: FeedScreen(
-                  isSignedIn: _isSignedIn,
-                  userId: _signedAccount.uuid,
-                  isAdmin: _isAdmin,
-                  themeMain: _themeMain,
-                  themeGrey: _themeGrey,
-                  bodyFontSize: _body,
-                ),
-              ),
-            ],
-          ),
-          if (_isSignedIn)
-            PersonalIsland(
-              netImgSm: _netImgSm,
-              apiName: _fullName,
-              themeLite: _themeLite,
-              headLine3: _headLine3,
-              isSignedIn: _isSignedIn,
-              onAppSettingsTap: _handleAppSettingsTap,
-            ),
-        ],
+    _homeScreen = Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage("assets/images/bg_pattern.jpg"),
+          fit: BoxFit.cover,
+        ),
       ),
-      bottomNavigationBar: CustomBottomNavBar(
-        themeLite: _themeLite,
-        themeDark: _themeMain,
-        themeGrey: _themeGrey,
-        navItem: _selectedIndex,
-        isAdminMode: _isAdmin,
-        isSignedIn: _isSignedIn,
-        hideAdminFeatures: !_isAdmin,
-        isFullyLoaded: !_isLoading,
-        onItemSelected: _handleNavItemSelected,
+      child: Scaffold(
+        backgroundColor: Colors.transparent, // So the image is visible
+        body: Stack(
+          children: [
+            Column(
+              children: [
+                const SizedBox(height: 140.0), //✅ adjust until there's no overlap
+                Expanded(
+                  child: FeedScreen(
+                    isSignedIn: _isSignedIn,
+                    userId: _signedAccount.uuid,
+                    isAdmin: _isAdmin,
+                    themeMain: _themeMain,
+                    themeGrey: _themeGrey,
+                    bodyFontSize: _body,
+                  ),
+                ),
+              ],
+            ),
+            if (_isSignedIn)
+              PersonalIsland(
+                netImgSm: _netImgSm,
+                apiName: _fullName,
+                themeLite: _themeLite,
+                headLine3: _headLine3,
+                isSignedIn: _isSignedIn,
+                onAppSettingsTap: _handleAppSettingsTap,
+              ),
+          ],
+        ),
+        bottomNavigationBar: CustomBottomNavBar(
+          themeLite: _themeLite,
+          themeDark: _themeMain,
+          themeGrey: _themeGrey,
+          navItem: _selectedIndex,
+          isAdminMode: _isAdmin,
+          isSignedIn: _isSignedIn,
+          hideAdminFeatures: !_isAdmin,
+          isFullyLoaded: !_isLoading,
+          onItemSelected: _handleNavItemSelected,
+          user: _signedAccount,
+        ),
       ),
     );
 
@@ -306,6 +353,8 @@ class _MyHomePageState extends State<MyHomePage> {
       isSignedIn: _isSignedIn,
       themeGrey: _themeGrey,
       isFullyLoaded: !_isLoading,
+        user: _signedAccount
+
     );
 
     _activityScreen = ActivityScreen(
@@ -322,7 +371,9 @@ class _MyHomePageState extends State<MyHomePage> {
       netImgSm: _netImgSm, // Added
       apiName: _fullName, // Added
       headLine3: _headLine3, // Added
-      onAppSettingsTap: _handleAppSettingsTap, // Added
+      onAppSettingsTap: _handleAppSettingsTap,
+        user: _signedAccount
+
     );
 
     _moderateScreen = Scaffold(
@@ -342,8 +393,10 @@ class _MyHomePageState extends State<MyHomePage> {
         hideAdminFeatures: !_isAdmin,
         isFullyLoaded: !_isLoading,
         onItemSelected: _handleNavItemSelected,
+          user: _signedAccount
       ),
     );
+
 
     _usersScreen = Scaffold(
       body: Center(
@@ -362,6 +415,7 @@ class _MyHomePageState extends State<MyHomePage> {
         hideAdminFeatures: !_isAdmin,
         isFullyLoaded: !_isLoading,
         onItemSelected: _handleNavItemSelected,
+          user: _signedAccount
       ),
     );
 
@@ -369,6 +423,28 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _updateCurrentScreen() {
+    // 🔽 Dynamically set system status bar based on screen and user level
+    if (_isAdmin && (_selectedIndex == 3 || _selectedIndex == 4)) {
+      // High-contrast status bar for admin screens
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Color(0xFF004D40), // darker teal
+          statusBarIconBrightness: Brightness.light, // light icons
+          statusBarBrightness: Brightness.dark, // iOS
+        ),
+      );
+    } else {
+      // Default status bar
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Color(0xFFF5F5F5), // light gray
+          statusBarIconBrightness: Brightness.dark, // dark icons
+          statusBarBrightness: Brightness.light, // iOS
+        ),
+      );
+    }
+
+    // 🔽 Then continue with setting the screen
     setState(() {
       if (!_isSignedIn) {
         _currentScreen = _signingScreen;
@@ -395,6 +471,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     });
   }
+
 
   Future<void> _checkInternetConnection() async {
     setState(() => _isLoading = true);

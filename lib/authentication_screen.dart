@@ -8,6 +8,10 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'widgets/loading_screen.dart';
 import '../services/database.dart';
 import '../models/account.dart';
+import 'dart:ui';
+import 'package:flutter/services.dart';
+
+
 
 class AuthenticationScreen extends StatefulWidget {
   final VoidCallback? onSignedIn;
@@ -26,7 +30,7 @@ class AuthenticationScreenState extends State<AuthenticationScreen> {
   final _themeLite = const Color(0xFFB2EBF2);
   final _bhServer = 'https://bleedingheart-api.vercel.app';
 
-  late final double _extraLarge = 36.0;
+  late final double _extraLarge = 48.0;
   late final double _body = 16.0;
 
   int lastLoginClicked = 0;
@@ -135,92 +139,147 @@ class AuthenticationScreenState extends State<AuthenticationScreen> {
   }
 
   Widget _buildSignInFields() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-      TextField(
-      controller: _usernameController,
-      decoration: InputDecoration(
-        hintText: 'Username',
-        filled: true,
-        fillColor: Colors.white,
-        labelStyle: TextStyle(fontSize: _body),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-        border: const OutlineInputBorder(),
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white30),
       ),
-    ),
-    const SizedBox(height: 12),
-    TextField(
-    controller: _passwordController,
-    obscureText: true,
-    decoration: InputDecoration(
-      hintText: 'Password',
-      filled: true,
-      fillColor: Colors.white,
-      labelStyle: TextStyle(fontSize: _body),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-      border: const OutlineInputBorder(),
-    ),
-    ),
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.black,
-              backgroundColor: _themeLite,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Username field
+          TextField(
+            controller: _usernameController,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Username',
+              hintStyle: const TextStyle(color: Colors.white70),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.1),
+              contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
               ),
             ),
-            onPressed: _retries >= 3
-                ? null
-                : () async {
-              final username = _usernameController.text.trim();
-              final password = _passwordController.text.trim();
-              await authorizeEmail(username, password);
-              _usernameController.clear();
-              _passwordController.clear();
-            },
-            child: const Text('Sign in'),
           ),
-        ),
-      ],
+          const SizedBox(height: 16),
+          // Password field
+          TextField(
+            controller: _passwordController,
+            obscureText: true,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Password',
+              hintStyle: const TextStyle(color: Colors.white70),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.1),
+              contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Sign in button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                backgroundColor: Colors.white,
+                foregroundColor: _themeMain,
+                textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 4,
+              ),
+              onPressed: _retries >= 3
+                  ? null
+                  : () async {
+                final username = _usernameController.text.trim();
+                final password = _passwordController.text.trim();
+                await authorizeEmail(username, password);
+                _usernameController.clear();
+                _passwordController.clear();
+              },
+              child: const Text('Sign In'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
+    // Enforce light background + dark icons for login screen
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent, // ✅ transparent status bar
+        statusBarIconBrightness: Brightness.light, // ✅ white icons for dark background
+        statusBarBrightness: Brightness.dark,
+      ),
+    );
+
     return _isLoading
         ? LoadingScreen(size: 80.0, color: _themeMain)
-        : Scaffold(
-      backgroundColor: _themeBG,
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(
-                'assets/images/logo.png',
-                height: 80.0,
+        : AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              'assets/images/bg_pattern.jpg',
+              fit: BoxFit.cover,
+            ),
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                child: Container(color: Colors.black.withOpacity(0.1)),
               ),
-              const SizedBox(height: 8.0),
-              Text(
-                'Hush',
-                style: TextStyle(
-                  fontSize: _extraLarge,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'PlaywritePL',
-                  color: _themeMain,
+            ),
+            Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset('assets/images/hush_logo.png', height: 130.0),
+                    const SizedBox(height: 8.0),
+                    const Text(
+                      'Speak freely. Feel safely.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 28.0,
+                        fontStyle: FontStyle.italic,
+                        fontFamily: 'Cursive',
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    if (!_isPaused) _buildSignInFields(),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
-              if (!_isPaused) _buildSignInFields(),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
+
   }
+
 }

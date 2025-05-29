@@ -54,7 +54,9 @@ class AppSettingsDialog extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(24, 24, 24, 12),
               child: Row(
                 children: [
-                  netImgLg ?? const SizedBox.shrink(),
+                  netImgLg != null
+                      ? SizedBox(width: 60, height: 60, child: netImgLg)
+                      : SizedBox.shrink(),
                   const SizedBox(width: 12.0),
                   Expanded(
                     child: Column(

@@ -5,6 +5,8 @@ import '../models/account.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/personal_island.dart';
 import 'post_detail_screen.dart';
+import 'dart:ui'; // For ImageFilter.blur
+
 
 class ActivityScreen extends StatelessWidget {
   final String userId;
@@ -21,6 +23,8 @@ class ActivityScreen extends StatelessWidget {
   final String? apiName;
   final double headLine3;
   final VoidCallback? onAppSettingsTap;
+  final Account user; // NEW
+
 
   const ActivityScreen({
     super.key,
@@ -38,16 +42,52 @@ class ActivityScreen extends StatelessWidget {
     this.apiName,
     required this.headLine3,
     this.onAppSettingsTap,
+    required this.user, // 👈 ADD THIS
   });
+
+
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
+          // Background Image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/bg_pattern.jpg',
+              fit: BoxFit.cover,
+            ),
+          ),
+
+          /*// Optional: Blur effect on background image (remove if you don’t want blur)
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: Container(
+                color: Colors.black.withOpacity(0), // required for blur to work
+              ),
+            ),
+          ),
+          */
+
+
           Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 100.0),
+              const SizedBox(height: 140.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 32.0),
+                child: Text(
+                  'Your Posts',
+                  style: TextStyle(
+                    fontSize: bodyFontSize + 2,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
               Expanded(
                 child: FutureBuilder<List<Post>>(
                   future: DatabaseService().getPosts(),
@@ -59,17 +99,6 @@ class ActivityScreen extends StatelessWidget {
                     return ListView(
                       padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                          child: Text(
-                            'Your Posts',
-                            style: TextStyle(
-                              fontSize: bodyFontSize + 2,
-                              fontWeight: FontWeight.bold,
-                              color: themeMain,
-                            ),
-                          ),
-                        ),
                         ...posts.asMap().entries.map((entry) {
                           final post = entry.value;
                           return GestureDetector(
@@ -85,11 +114,17 @@ class ActivityScreen extends StatelessWidget {
                                     themeMain: themeMain,
                                     themeGrey: themeGrey,
                                     bodyFontSize: bodyFontSize,
+
                                   ),
                                 ),
                               );
                             },
                             child: Card(
+                              color: Colors.white, // ✅ Set card background to white
+                              elevation: 2, // Optional: slight shadow for depth
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                              ),
                               child: Padding(
                                 padding: const EdgeInsets.all(12.0),
                                 child: Column(
@@ -151,17 +186,22 @@ class ActivityScreen extends StatelessWidget {
             ),
         ],
       ),
-      bottomNavigationBar: CustomBottomNavBar(
-        themeLite: themeLite,
-        themeDark: themeMain,
-        themeGrey: themeGrey,
-        navItem: navItem,
-        isAdminMode: isAdmin,
-        isSignedIn: isSignedIn,
-        hideAdminFeatures: !isAdmin,
-        isFullyLoaded: isFullyLoaded,
-        onItemSelected: onItemSelected,
+      bottomNavigationBar: Container(
+        color: Colors.white,  // or use themeLite or themeMain if you want a themed color
+        child: CustomBottomNavBar(
+          themeLite: themeLite,
+          themeDark: themeMain,
+          themeGrey: themeGrey,
+          navItem: navItem,
+          isAdminMode: isAdmin,
+          isSignedIn: isSignedIn,
+          hideAdminFeatures: !isAdmin,
+          isFullyLoaded: isFullyLoaded,
+          user: user,
+          onItemSelected: onItemSelected,
+        ),
       ),
+
     );
   }
 }

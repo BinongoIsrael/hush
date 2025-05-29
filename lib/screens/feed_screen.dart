@@ -38,16 +38,19 @@ class _FeedScreenState extends State<FeedScreen> {
 
   void _reactToPost(String postId) async {
     final hasReacted = await DatabaseService().hasReacted(postId, widget.userId);
-    if (!hasReacted) {
+    if (hasReacted) {
+      await DatabaseService().deleteReaction(postId, widget.userId);
+    } else {
       await DatabaseService().insertReaction(
         _uuid.v4(),
         postId,
         widget.userId,
         DateTime.now().toIso8601String(),
       );
-      setState(() {});
     }
+    setState(() {}); // Refresh UI after reacting/unreacting
   }
+
 
   void _reportContent(String contentId, String contentType) async {
     final reason = await showDialog<String>(
@@ -144,21 +147,33 @@ class _FeedScreenState extends State<FeedScreen> {
                       // Inside the Card in FeedScreen's ListView.builder
                       Row(
                         children: [
+                          // React emoji button
                           IconButton(
-                            icon: Icon(Icons.favorite, color: widget.themeMain),
+                            icon: Text(
+                              '✨',
+                              style: TextStyle(fontSize: 20.0),
+                            ),
                             onPressed: widget.isSignedIn ? () => _reactToPost(post.id) : null,
                           ),
-                          Text('${post.reactionCount}', style: TextStyle(fontSize: widget.bodyFontSize)),
+
+                          // Show reaction count only if > 0
+                          if (post.reactionCount > 0)
+                            Text(
+                              '${post.reactionCount}',
+                              style: TextStyle(fontSize: widget.bodyFontSize),
+                            ),
+
                           const SizedBox(width: 16.0),
+
+                          // Comment emoji + conditional count
                           FutureBuilder<List<Comment>>(
                             future: DatabaseService().getComments(post.id),
                             builder: (context, snapshot) {
                               final commentCount = snapshot.hasData ? snapshot.data!.length : 0;
                               return Row(
                                 children: [
-                                  IconButton(
-                                    icon: Icon(Icons.comment, color: widget.themeMain),
-                                    onPressed: widget.isSignedIn
+                                  GestureDetector(
+                                    onTap: widget.isSignedIn
                                         ? () {
                                       Navigator.push(
                                         context,
@@ -176,16 +191,32 @@ class _FeedScreenState extends State<FeedScreen> {
                                       ).then((_) => setState(() {}));
                                     }
                                         : null,
+                                    child: Text(
+                                      '💬',
+                                      style: TextStyle(fontSize: 20, color: widget.themeMain),
+                                    ),
                                   ),
-                                  Text('$commentCount', style: TextStyle(fontSize: widget.bodyFontSize)),
+
+                                  // Show comment count only if > 0
+                                  if (commentCount > 0)
+                                    Text(
+                                      '$commentCount',
+                                      style: TextStyle(fontSize: widget.bodyFontSize),
+                                    ),
                                 ],
                               );
                             },
                           ),
+
                           const SizedBox(width: 16.0),
-                          IconButton(
-                            icon: Icon(Icons.report, color: widget.themeGrey),
-                            onPressed: widget.isSignedIn ? () => _reportContent(post.id, 'post') : null,
+
+                          // Report emoji
+                          GestureDetector(
+                            onTap: widget.isSignedIn ? () => _reportContent(post.id, 'post') : null,
+                            child: Text(
+                              '🛑',
+                              style: TextStyle(fontSize: 20, color: widget.themeGrey),
+                            ),
                           ),
                         ],
                       ),
