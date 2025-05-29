@@ -4,6 +4,7 @@ import '../services/database.dart';
 import '../models/post.dart';
 import '../models/account.dart';
 
+
 class PostDetailScreen extends StatefulWidget {
   final Post post;
   final bool isSignedIn;
@@ -24,15 +25,34 @@ class PostDetailScreen extends StatefulWidget {
     required this.bodyFontSize,
   });
 
+
   @override
   State<PostDetailScreen> createState() => _PostDetailScreenState();
 }
 
+
+
 class _PostDetailScreenState extends State<PostDetailScreen> {
+  int _reactionCount = 0;
+
   final _uuid = const Uuid();
   final _commentController = TextEditingController();
   bool _isCommentAnonymous = false;
   final _futureBuilderKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReactionCount();
+  }
+
+  void _loadReactionCount() async {
+    final count = await DatabaseService().getReactionCount(widget.post.id);
+    setState(() {
+      _reactionCount = count;
+    });
+  }
+
 
   Future<String> _getDisplayName(Post post) async {
     if (post.isAnonymous) return 'Anonymous_${post.id.substring(0, 8)}';
@@ -68,8 +88,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       _commentController.clear();
       setState(() {
         _isCommentAnonymous = false;
-        _futureBuilderKey.currentState?.setState(() {});
+        //_futureBuilderKey.currentState?.setState(() {});
       });
+      _loadReactionCount();
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Reply added.', style: TextStyle(fontSize: widget.bodyFontSize))),
       );
@@ -81,18 +103,26 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
-  void _reactToPost() async {
-    final hasReacted = await DatabaseService().hasReacted(widget.post.id, widget.userId);
-    if (!hasReacted) {
+
+
+  void _reactToPost(String postId) async {
+    final hasReacted = await DatabaseService().hasReacted(postId, widget.userId);
+    if (hasReacted) {
+      await DatabaseService().deleteReaction(postId, widget.userId);
+    } else {
       await DatabaseService().insertReaction(
         _uuid.v4(),
-        widget.post.id,
+        postId,
         widget.userId,
         DateTime.now().toIso8601String(),
       );
-      setState(() {});
     }
+    final updatedCount = await DatabaseService().getReactionCount(postId);
+    setState(() {
+      _reactionCount = updatedCount;
+    });
   }
+
 
   void _reportContent(String contentId, String contentType) async {
     final reason = await showDialog<String>(
@@ -235,6 +265,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     ).then((_) {
                       print('Refreshing UI after reply');
                       setState(() {});
+                      _loadReactionCount();
                     });
                   },
                   child: Text('Reply', style: TextStyle(fontSize: widget.bodyFontSize - 2, color: widget.themeMain)),
@@ -242,9 +273,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             ],
           ),
           trailing: widget.isSignedIn
-              ? IconButton(
-            icon: Icon(Icons.report, color: widget.themeGrey),
-            onPressed: () => _reportContent(comment.id, 'comment'),
+              ? // Report emoji
+          GestureDetector(
+            onTap: widget.isSignedIn ? () => _reportContent(widget.post.id, 'post') : null,
+            child: Text(
+              '🛑',
+              style: TextStyle(fontSize: 20, color: widget.themeGrey),
+            ),
           )
               : null,
         );
@@ -342,9 +377,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             ],
           ),
           trailing: widget.isSignedIn
-              ? IconButton(
-            icon: Icon(Icons.report, color: widget.themeGrey),
-            onPressed: () => _reportContent(comment.id, 'comment'),
+              ? // Report emoji
+          GestureDetector(
+            onTap: widget.isSignedIn ? () => _reportContent(widget.post.id, 'post') : null,
+            child: Text(
+              '🛑',
+              style: TextStyle(fontSize: 20, color: widget.themeGrey),
+            ),
           )
               : null,
           children: [
@@ -400,91 +439,134 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     Row(
                       children: [
                         IconButton(
-                          icon: Icon(Icons.favorite, color: widget.themeMain),
-                          onPressed: widget.isSignedIn ? _reactToPost : null,
+                          icon: Text(
+                            '✨',
+                            style: TextStyle(fontSize: 20.0),
+                          ),
+                          onPressed: widget.isSignedIn ? () => _reactToPost(widget.post.id) : null,
                         ),
-                        Text('${widget.post.reactionCount}', style: TextStyle(fontSize: widget.bodyFontSize)),
+
+                        if (_reactionCount > 0)
+                          Text(
+                            '$_reactionCount',
+                            style: TextStyle(fontSize: widget.bodyFontSize),
+                          ),
+
                         const SizedBox(width: 16.0),
-                        IconButton(
-                          icon: Icon(Icons.comment, color: widget.themeMain),
-                          onPressed: widget.isSignedIn
-                              ? () {
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              builder: (context) => StatefulBuilder(
-                                builder: (BuildContext context, StateSetter modalSetState) {
-                                  bool localIsAnonymous = _isCommentAnonymous;
-                                  return Padding(
-                                    padding: EdgeInsets.only(
-                                      bottom: MediaQuery.of(context).viewInsets.bottom,
-                                      left: 16.0,
-                                      right: 16.0,
-                                      top: 16.0,
-                                    ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        TextField(
-                                          controller: _commentController,
-                                          decoration: const InputDecoration(
-                                            hintText: 'Add a comment...',
-                                            border: OutlineInputBorder(),
-                                          ),
-                                          style: TextStyle(fontSize: widget.bodyFontSize),
-                                          autofocus: true,
-                                        ),
-                                        const SizedBox(height: 12.0),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text('Comment Anonymously',
-                                                style: TextStyle(fontSize: widget.bodyFontSize)),
-                                            Switch(
-                                              value: localIsAnonymous,
-                                              activeColor: widget.themeMain,
-                                              onChanged: (value) {
-                                                modalSetState(() {
-                                                  localIsAnonymous = value;
-                                                });
-                                                setState(() {
-                                                  _isCommentAnonymous = value;
-                                                });
-                                              },
+
+                        // Comment emoji + conditional count using FutureBuilder
+                        FutureBuilder<List<Comment>>(
+                          future: DatabaseService().getComments(widget.post.id),
+                          builder: (context, snapshot) {
+                            final commentCount = snapshot.hasData ? snapshot.data!.length : 0;
+                            return Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: widget.isSignedIn
+                                      ? () {
+                                    // Since you are already in PostDetailScreen,
+                                    // just refresh state here or open comment modal if needed
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      builder: (context) => StatefulBuilder(
+                                        builder: (BuildContext context, StateSetter modalSetState) {
+                                          bool localIsAnonymous = _isCommentAnonymous;
+                                          return Padding(
+                                            padding: EdgeInsets.only(
+                                              bottom: MediaQuery.of(context).viewInsets.bottom,
+                                              left: 16.0,
+                                              right: 16.0,
+                                              top: 16.0,
                                             ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 12.0),
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            _submitComment();
-                                            Navigator.pop(context);
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: widget.themeMain,
-                                            foregroundColor: Colors.white,
-                                          ),
-                                          child: Text('Comment', style: TextStyle(fontSize: widget.bodyFontSize)),
-                                        ),
-                                        const SizedBox(height: 16.0),
-                                      ],
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                TextField(
+                                                  controller: _commentController,
+                                                  decoration: const InputDecoration(
+                                                    hintText: 'Add a comment...',
+                                                    border: OutlineInputBorder(),
+                                                  ),
+                                                  style: TextStyle(fontSize: widget.bodyFontSize),
+                                                  autofocus: true,
+                                                ),
+                                                const SizedBox(height: 12.0),
+                                                Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Text('Comment Anonymously',
+                                                        style: TextStyle(fontSize: widget.bodyFontSize)),
+                                                    Switch(
+                                                      value: localIsAnonymous,
+                                                      activeColor: widget.themeMain,
+                                                      onChanged: (value) {
+                                                        modalSetState(() {
+                                                          localIsAnonymous = value;
+                                                        });
+                                                        setState(() {
+                                                          _isCommentAnonymous = value;
+                                                        });
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 12.0),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    _submitComment();
+                                                    Navigator.pop(context);
+                                                  },
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: widget.themeMain,
+                                                    foregroundColor: Colors.white,
+                                                  ),
+                                                  child: Text('Comment', style: TextStyle(fontSize: widget.bodyFontSize)),
+                                                ),
+                                                const SizedBox(height: 16.0),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ).then((_) {
+                                      print('Refreshing UI after comment modal');
+                                      setState(() {});
+                                    });
+                                  }
+                                      : null,
+                                  child: Text(
+                                    '💬',
+                                    style: TextStyle(fontSize: 20, color: widget.themeMain),
+                                  ),
+                                ),
+
+                                if (commentCount > 0)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 4.0),
+                                    child: Text(
+                                      '$commentCount',
+                                      style: TextStyle(fontSize: widget.bodyFontSize),
                                     ),
-                                  );
-                                },
-                              ),
-                            ).then((_) {
-                              print('Refreshing UI after top-level comment');
-                              setState(() {});
-                            });
-                          }
-                              : null,
+                                  ),
+                              ],
+                            );
+                          },
                         ),
-                        IconButton(
-                          icon: Icon(Icons.report, color: widget.themeGrey),
-                          onPressed: widget.isSignedIn ? () => _reportContent(widget.post.id, 'post') : null,
+
+                        const SizedBox(width: 16.0),
+
+                        // Report emoji
+                        GestureDetector(
+                          onTap: widget.isSignedIn ? () => _reportContent(widget.post.id, 'post') : null,
+                          child: Text(
+                            '🛑',
+                            style: TextStyle(fontSize: 20, color: widget.themeGrey),
+                          ),
                         ),
                       ],
                     ),
+
                   ],
                 ),
               ),
