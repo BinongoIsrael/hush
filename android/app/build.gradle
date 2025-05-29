@@ -25,7 +25,7 @@ android {
         targetSdk 35
 
         versionCode 1
-        versionName "HX.010.001"
+        versionName "HX.010.002"
     }
 
     signingConfigs {
