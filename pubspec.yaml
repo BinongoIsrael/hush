@@ -48,10 +48,10 @@ flutter:
         - asset: assets/fonts/PlaywritePL-VariableFont_wght.ttf
 
 flutter_launcher_icons:
-  image_path: 'assets/images/logo.png'
+  image_path: 'assets/images/hush_logo.png'
   android: "launcher_icon"
   min_sdk_android: 21
 
 flutter_native_splash:
-  image: assets/images/logo.png
+  image: assets/images/hush_logo.png
   color: "#0097a7"
