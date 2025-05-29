@@ -48,20 +48,26 @@ class PersonalIsland extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const SizedBox(width: _smallSpacing),
-                  netImgSm ?? const SizedBox.shrink(),
-                  const SizedBox(width: _mediumSpacing),
-                  Text(
-                    apiName ?? '',
-                    style: TextStyle(
-                      fontSize: headLine3,
-                      color: Colors.black,
+              Padding(
+                padding: const EdgeInsets.only(left: 12.0), // 🔄 Adjust value as needed
+                child: Row(
+                  children: [
+                    Icon(Icons.menu, size: headLine3 * 1.5, color: Color(0xFF0097A7)),
+                    const SizedBox(width: _mediumSpacing),
+                    Text(
+                      'Hush',
+                      style: TextStyle(
+                        fontSize: headLine3 * 2,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                        fontFamily: 'Roboto',
+                        color: Color(0xB300808e), // ✅ updated font color here
+                      ),
                     ),
-                  ),
-                ],
-              )
+                  ],
+                ),
+              ),
+              // Optional: Add trailing icons or profile picture here
             ],
           ),
         ),
