@@ -1,16 +1,27 @@
-# hush
+# Hush  
+*A safe space for everyone to socialize and share their experiences in life anonymously.*
 
-A new Flutter project.
+## Releases
 
-## Getting Started
+| Initial Release Code | Date Released |
+|----------------------|---------------|
+| HX.010.001           | [2025-05-26]  |
+| HX.010.002           | [YYYY-05-30]  |
 
-This project is a starting point for a Flutter application.
+### HX.010.002 Release Notes  
+**What's New**  
+- Improved overall UI for a cleaner, more intuitive experience.  
+- Simplified navigation bar for easier access to features.  
+- General performance enhancements and bug fixes.  
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### HX.010.001 Release Notes  
+**What's New**  
+- **Core Features:**  
+  - Post thoughts, questions, or confessions anonymously.  
+  - Comment on any post without revealing identity.  
+  - React to posts using identifiable reactions.  
+- **Technical Setup:**  
+  - Added basic assets and database initialization.  
+  - Initial folder structure setup following project architecture.  
+  - Implemented responsive screen layout foundation.  
+  - Deployed first stable version of the application.  
