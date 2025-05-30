@@ -6,7 +6,7 @@
 | Initial Release Code | Date Released |
 |----------------------|---------------|
 | HX.010.001           | [2025-05-26]  |
-| HX.010.002           | [YYYY-05-30]  |
+| HX.010.002           | [2025-05-30]  |
 
 ### HX.010.002 Release Notes  
 **What's New**  
